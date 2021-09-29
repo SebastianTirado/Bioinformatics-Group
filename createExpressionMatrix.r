@@ -1,3 +1,6 @@
+#This script creates a matrix of the counts of genes for each sample
+library(dplyr)
+setwd("GSE143791_condensed")
 temp = list.files(pattern="*.count")
 myfiles = lapply(temp, read.csv)
 matrix <- bind_cols(myfiles, .id="column_label")
