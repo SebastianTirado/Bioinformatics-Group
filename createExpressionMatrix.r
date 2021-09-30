@@ -9,3 +9,16 @@ expressionMatrix <- distinct(expressionMatrix, X...1, .keep_all=TRUE)
 rownames(expressionMatrix) <- expressionMatrix[,1]
 expressionMatrix[,1] <- NULL
 View(expressionMatrix)
+
+# find range for each gene expression
+range_df <- data.frame("gene", "range")
+for(i in 1:nrow(expressionMatrix)){     # for each gene in the matrix
+  gene_name <- expressionMatrix[i,1]
+  num_col <- ncol(expressionMatrix)
+  numeric_row <- as.numeric(expressionMatrix[i, 2:num_col])
+  
+  # finds the difference between the largest and smallest value
+  range_val <- max(numeric_row)- min(numeric_row)
+  range_df[nrow(range_df) + 1,] = list(gene_name, as.numeric(range_val))
+}
+view(range_df)
