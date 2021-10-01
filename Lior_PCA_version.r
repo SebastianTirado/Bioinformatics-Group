@@ -33,3 +33,8 @@ dds <- DESeqDataSetFromMatrix(countData = expressionMatrix,
 vst <- vst(dds, blind = FALSE)
 
 plotPCA(vst, intgroup=c("dex"))
+
+#create the tsne plot
+library(Rtsne)
+tsneResults <- Rtsne(expressionMatrix, perplexity=1, check_duplicates = FALSE)
+plot(tsneResults$Y,col=groupClassification$dex)
