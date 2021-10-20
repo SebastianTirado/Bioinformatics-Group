@@ -28,9 +28,11 @@ view(range_df)
 ### Generating DESeq2 object ###
 setwd("./..")
 
-
+# holds list of sample names a factor which puts them into tumor or non-tumor group
 group_classification <- read.csv("group_classification.csv",header = T,row.names=1,
                                 stringsAsFactors=T)
+
+# filter out genes that are not highly expressed
 filt_expression_matrix <- expressionMatrix %>% dplyr::filter(rowSums(.) >= 10)
 
 dds <- DESeqDataSetFromMatrix(countData = filt_expression_matrix,
@@ -67,3 +69,41 @@ volcano_plot <- EnhancedVolcano::EnhancedVolcano(
   y = "padj",
   pCutoff = 0.01 # Loosen the cutoff since we supplied corrected p-values
 )
+
+# normalize values
+dds_norm <- rlog(dds)
+
+# get upper 25% of high-variance genes
+variances <- apply(assay(dds_norm), 1, var)
+upper_var <- quantile(variances, 0.75)
+
+# put these genes into dataframe
+df_by_var <- data.frame(assay(dds_norm)) %>%
+  dplyr::filter(variances > upper_var)
+
+heatmap <- pheatmap(
+  df_by_var,
+  cluster_rows = TRUE, # Cluster the rows of the heatmap (genes in this case)
+  cluster_cols = TRUE, # Cluster the columns of the heatmap (samples),
+  show_rownames = FALSE, # There are too many genes to clearly show the labels
+  main = "Non-Annotated Heatmap",
+  colorRampPalette(c(
+    "blue",
+    "white",
+    "red"
+  ))(25
+  ),
+  scale = "row" # Scale values in the direction of genes (rows)
+)
+
+# create list of gene names for enrichment analysis
+gene_names <- range_df$X.gene.[-1]
+
+# use gprofiler3 to find relationships
+gostres <- gost(query = gene_names, 
+                organism = "hsapiens", ordered_query = FALSE, 
+                multi_query = FALSE, significant = TRUE, exclude_iea = FALSE, 
+                measure_underrepresentation = FALSE, evcodes = FALSE, 
+                user_threshold = 0.05, correction_method = "g_SCS", 
+                domain_scope = "annotated", custom_bg = NULL, 
+                numeric_ns = "", sources = NULL, as_short_link = FALSE)
