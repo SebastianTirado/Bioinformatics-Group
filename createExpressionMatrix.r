@@ -1,4 +1,5 @@
 #This script creates a matrix of the counts of genes for each sample
+install.packages("tidyverse")
 library(dplyr)
 setwd("GSE143791_condensed")
 temp = list.files(pattern="*.count")
@@ -23,7 +24,7 @@ for(i in 1:nrow(expressionMatrix)){     # for each gene in the matrix
   range_val <- max(numeric_row)- min(numeric_row)
   range_df[nrow(range_df) + 1,] = list(gene_name, as.numeric(range_val))
 }
-view(range_df)
+View(range_df)
 
 ### Generating DESeq2 object ###
 setwd("./..")
@@ -34,6 +35,14 @@ group_classification <- read.csv("group_classification.csv",header = T,row.names
 
 # filter out genes that are not highly expressed
 filt_expression_matrix <- expressionMatrix %>% dplyr::filter(rowSums(.) >= 10)
+
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+
+BiocManager::install("DESeq2")  # in case package is not installed
+BiocManager::install("apeglm")
+library("DESeq2")
+library("apeglm")
 
 dds <- DESeqDataSetFromMatrix(countData = filt_expression_matrix,
                               colData = group_classification,
@@ -107,3 +116,27 @@ gostres <- gost(query = gene_names,
                 user_threshold = 0.05, correction_method = "g_SCS", 
                 domain_scope = "annotated", custom_bg = NULL, 
                 numeric_ns = "", sources = NULL, as_short_link = FALSE)
+
+install.packages("matrixStats") # only need to install once and then ignore these lines
+library(matrixStats)
+
+# create new column with variance values
+expressionMatrix$variance = rowVars(as.matrix(expressionMatrix[,c(-1)]))
+# order data by variance decreasing
+expressionMatrix = expressionMatrix[order(expressionMatrix[,33],decreasing=TRUE),]
+
+expression_var <- expressionMatrix
+expressionMatrix <- expressionMatrix[-33]
+# get subset of X amount of top values based on variance - convert to df
+greatest5000VarGenes.df = head(as.data.frame(expressionMatrix),5000)
+greatest10VarGenes.df = head(as.data.frame(expressionMatrix), 10)
+greatest100VarGenes.df = head(as.data.frame(expressionMatrix), 100)
+greatest1000VarGenes.df = head(as.data.frame(expressionMatrix), 500)
+# RUN INDIVIDUAL CLUSTERING ALGORITHM - PUSH TO GITHUB
+
+# necessary for hclust
+dist_matrix = dist(greatest1000VarGenes.df)
+
+hc <- hclust(dist_matrix, method="ward.D2")
+plot(hc, labels = NULL)
+
