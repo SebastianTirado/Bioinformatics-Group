@@ -24,7 +24,11 @@ for(i in 1:nrow(expressionMatrix)){     # for each gene in the matrix
   range_val <- max(numeric_row)- min(numeric_row)
   range_df[nrow(range_df) + 1,] = list(gene_name, as.numeric(range_val))
 }
+<<<<<<< HEAD
+view(range_df)
+=======
 View(range_df)
+>>>>>>> 2b5c11aab3e5b3c88b906219eab3b98771d1ea6a
 
 ### Generating DESeq2 object ###
 setwd("./..")
@@ -36,6 +40,8 @@ group_classification <- read.csv("group_classification.csv",header = T,row.names
 # filter out genes that are not highly expressed
 filt_expression_matrix <- expressionMatrix %>% dplyr::filter(rowSums(.) >= 10)
 
+<<<<<<< HEAD
+=======
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
 
@@ -44,6 +50,7 @@ BiocManager::install("apeglm")
 library("DESeq2")
 library("apeglm")
 
+>>>>>>> 2b5c11aab3e5b3c88b906219eab3b98771d1ea6a
 dds <- DESeqDataSetFromMatrix(countData = filt_expression_matrix,
                               colData = group_classification,
                               design = ~ dex)
@@ -116,6 +123,8 @@ gostres <- gost(query = gene_names,
                 user_threshold = 0.05, correction_method = "g_SCS", 
                 domain_scope = "annotated", custom_bg = NULL, 
                 numeric_ns = "", sources = NULL, as_short_link = FALSE)
+<<<<<<< HEAD
+=======
 
 install.packages("matrixStats") # only need to install once and then ignore these lines
 library(matrixStats)
@@ -127,16 +136,68 @@ expressionMatrix = expressionMatrix[order(expressionMatrix[,33],decreasing=TRUE)
 
 expression_var <- expressionMatrix
 expressionMatrix <- expressionMatrix[-33]
+
 # get subset of X amount of top values based on variance - convert to df
 greatest5000VarGenes.df = head(as.data.frame(expressionMatrix),5000)
 greatest10VarGenes.df = head(as.data.frame(expressionMatrix), 10)
 greatest100VarGenes.df = head(as.data.frame(expressionMatrix), 100)
-greatest1000VarGenes.df = head(as.data.frame(expressionMatrix), 500)
+greatest1000VarGenes.df = head(as.data.frame(expressionMatrix), 1000)
+greatest10000VarGenes.df = head(as.data.frame(expressionMatrix), 10000)
 # RUN INDIVIDUAL CLUSTERING ALGORITHM - PUSH TO GITHUB
-
+test_df <- greatest5000VarGenes.df
+test_df <- t(test_df)
 # necessary for hclust
-dist_matrix = dist(greatest1000VarGenes.df)
+dist_matrix = dist(test_df)
 
 hc <- hclust(dist_matrix, method="ward.D2")
 plot(hc, labels = NULL)
 
+# alluvial diagram for hclust
+cluster_cut <- cutree(hc, 4)
+
+# alluvial_df <- data.frame(table(cluster_cut))
+alluvial_df <- rbind(alluvial_df, data.frame(table(cluster_cut)))
+View(alluvial_df)
+group <- c('10', '10', '10', '10', '10', '100', '100', '100', '100', '1000',
+           '1000','1000', '1000','5000', '5000', '5000', '5000', '10000', 
+           '10000', '10000', '10000')
+alluvial_df$num_genes <- group
+mod_alluvial_df <- alluvial_df[-c(1,2,3,4,5,6), ]  # get a subset for better scales
+
+ggplot(mod_alluvial_df,
+               aes(y = Freq, axis1 = num_genes, axis2 = cluster_cut)) +
+       geom_alluvium(aes(fill = cluster_cut), width = 1/12) +
+       geom_stratum(width = 1/12, fill = "black", color = "grey") +geom_label(stat = "stratum", aes(label = after_stat(stratum))) +
+       scale_x_discrete(limits = c("Number of Clustered Genes", "Cluster"), expand = c(.05, .05)) +
+       scale_fill_brewer(type = "qual", palette = "Set1") +
+       ggtitle("Breakdown of Clustered Samples")
+
+data_cluster <- data.frame(cutree(hc, 3))
+
+copy_5000 <- greatest5000VarGenes.df
+copy_5000$gene <- row.names(copy_5000)
+copy_5000$cluster <- cluster_cut[copy_5000$gene]
+
+copy_5000 <- copy_5000[-33]
+library(pheatmap)
+heatmap <- pheatmap(
+  copy_5000,
+  cluster_rows = TRUE, # Cluster the rows of the heatmap (genes in this case)
+  cluster_cols = TRUE, # Cluster the columns of the heatmap (samples),
+  show_rownames = FALSE, # There are too many genes to clearly show the labels
+  main = "Non-Annotated Heatmap",
+  colorRampPalette(c(
+    "blue",
+    "white",
+    "red"
+  ))(25
+  ),
+  scale = "row" # Scale values in the direction of genes (rows)
+)
+
+cancer_samps <- c(6, 1, 2, 0)
+noncancer_sampls <- c(7, 1, 9, 6)
+
+chi_table = rbind(cancer_samps, noncancer_sampls)
+View(chi_table)
+colnames(chi_table) <- c('cluster_1', 'cluster_2', 'cluster_3', 'cluster_4')
