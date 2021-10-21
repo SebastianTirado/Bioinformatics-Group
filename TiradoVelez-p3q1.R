@@ -119,5 +119,5 @@ expressionMatrix$variance = rowVars(as.matrix(expressionMatrix[,c(-1)]))
 # order data by variance decreasing
 expressionMatrix = expressionMatrix[order(expressionMatrix[,33],decreasing=TRUE),]
 # get subset of X amount of top values based on variance - convert to df
-greatestVarGenes.df = head(as.data.frame(expressionMatrix),5000)
+greatestVarGenes.df = t(head(as.data.frame(expressionMatrix),5000))
 # RUN INDIVIDUAL CLUSTERING ALGORITHM - PUSH TO GITHUB
