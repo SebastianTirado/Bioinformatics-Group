@@ -14,3 +14,7 @@ Carson Hamel	carsonhamel@ufl.edu
 github.com/carsonhamel
 Dylan Maillart	dmaillart@ufl.edu
 github.com/dmaillart
+
+Project Final Presentation can be found in repo in .pptx format
+
+Project Final Report can be found in repo in .docx format
